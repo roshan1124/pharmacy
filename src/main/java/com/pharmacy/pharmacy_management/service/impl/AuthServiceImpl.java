@@ -6,6 +6,7 @@ import com.pharmacy.pharmacy_management.dto.response.AuthResponse;
 import com.pharmacy.pharmacy_management.entity.Role;
 import com.pharmacy.pharmacy_management.entity.User;
 import com.pharmacy.pharmacy_management.repository.UserRepository;
+import com.pharmacy.pharmacy_management.security.JwtUtil;
 import com.pharmacy.pharmacy_management.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,9 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JwtUtil jwtUtil;  // ← Add this
+
     @Override
     public AuthResponse login(LoginRequest loginRequest) {
         User user = userRepository.findByUsername(loginRequest.getUsername())
@@ -25,8 +29,11 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Invalid username or password");
         }
 
+        // Generate REAL JWT token
+        String token = jwtUtil.generateToken(user.getUsername(), user.getRole().toString());
+
         return new AuthResponse(
-                "temp-token",
+                token,  // ← Now returns real JWT
                 user.getUsername(),
                 user.getRole().toString(),
                 "Login successful"
@@ -65,8 +72,11 @@ public class AuthServiceImpl implements AuthService {
 
         userRepository.save(user);
 
+        // Generate REAL JWT token
+        String token = jwtUtil.generateToken(user.getUsername(), user.getRole().toString());
+
         return new AuthResponse(
-                "temp-token",
+                token,  // ← Now returns real JWT
                 user.getUsername(),
                 user.getRole().toString(),
                 "Registration successful"
